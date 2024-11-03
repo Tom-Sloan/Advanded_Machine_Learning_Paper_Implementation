@@ -1,0 +1,41 @@
+Author Name,Paper Name,Publisher,Year
+"C. H. Lampert, et al.",Attribute-based classification for zero-shot visual object categorization,T-PAMI,2014
+"Y. Xian, et al.",Latent embeddings for zero-shot classification,CVPR,2016
+"E. Kodirov, et al.",Semantic Autoencoder for Zero-Shot Learning,CVPR,2017
+"Y. Xian, et al.",Feature Generating Networks for Zero-Shot Learning,CVPR,2018
+"J. Snell, K. Swersky, and R. Zemel",Prototypical networks for few-shot learning,NIPS,2017
+"Vinyals, O., Blundell, C., Lillicrap, T., Kavukcuoglu, K., & Wierstra, D.",Matching Networks for One Shot Learning,NIPS,2016
+"Chelsea Finn, et. al.",Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks,ICML,2017
+"F. Sung, Y. Yang, and L. Zhang",Learning to Compare: Relation Network for Few-Shot Learning,CVPR,2018
+"Isola, Phillip, et al.",Image-to-image translation with conditional adversarial networks,CVPR,2017
+"Zhu, Jun-Yan, et al.",Unpaired image-to-image translation using cycle-consistent adversarial networks,ICCV,2017
+"Karras, Tero, et al.",A style-based generator architecture for generative adversarial networks,CVPR,2019
+"Tero Karras, et al.","Progressive Growing of GANs for Improved Quality, Stability, and Variation",ICLR,2018
+"Choi, Yunjey, et al.",Stargan: Unified generative adversarial networks for multi-domain image-to-image translation,CVPR,2018
+"Xie, Junyuan, et al.",Unsupervised deep embedding for clustering analysis,ICML,2016
+"Yang, Bo, et al.",Towards k-means-friendly spaces: Simultaneous deep learning and clustering,ICML,2017
+M. Grootendorst,BERTopic: Neural topic modeling with a class-based TF-IDF procedure,arXiv,2022
+"Shaham, Uri, et al.",Spectralnet: Spectral clustering using deep neural networks,ICLR,2018
+Z. Li and D. Hoiem,Learning without Forgetting,,2016
+"B. Fernando, et.al.",Unsupervised Visual Domain Adaptation Using Subspace Alignment,ICCV,2013
+"Judy Hoffman, et.al.",CyCADA: Cycle-Consistent Adversarial Domain Adaptation,ICML,2018
+"T Chen, et. al.",A Simple Framework for Contrastive Learning of Visual Representations,ICML,2020
+"K. He, et. al.",Momentum Contrast for Unsupervised Visual Representation Learning,CVPR,2020
+"J. Grill, et. al.",Bootstrap Your Own Latent: A New Approach to Self-Supervised Learning,NeurIPS,2020
+"M. Caron, et. al.",Unsupervised Learning of Visual Features by Contrasting Cluster Assignments,NeurIPS,2020
+"Marco Tulio Ribeiro, et. al.",Why Should I Trust You?: Explaining the Predictions of Any Classifier,KDD,2016
+"Scott Lundberg, Su-In Lee",A Unified Approach to Interpreting Model Predictions,NeurIPS,2017
+"R. R. Selvaraju, et al.",Grad-cam: Visual explanations from deep networks via gradient-based localization,ICCV,2017
+"Been Kim, et. al.",Interpretability Beyond Feature Attribution: Quantitative Testing with Concept Activation Vectors (TCAV),ICML,2018
+"Oscar Li, et. al.",Deep Learning for Case-Based Reasoning through Prototypes: A Neural Network that Explains Its Predictions,AAAI,2018
+"C. Chen, et. al.",This Looks Like That: Deep Learning for Interpretable Image Recognition,NeurIPS,2019
+"Marco Ribeiro, et. al.",Anchors: High-Precision Model-Agnostic Explanations,AAAI,2018
+"Kenton, Jacob, et al.",Bert: Pre-training of deep bidirectional transformers for language understanding,ACL,2019
+"Radford, Alec, et al.",Improving language understanding by generative pre-training,,2018
+X. L. Li and P. Liang,Prefix-tuning: Optimizing continuous prompts for generation,ACL,2021
+"Hu, Edward J., et al.",Lora: Low-rank adaptation of large language models,ICLR,2022
+"Kojima, Takeshi, et al.",Large language models are zero-shot reasoners,NeurIPS,2022
+"A. Dosovitskiy, et al.",An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale,,2020
+"A. Radford, et al.",Learning transferable visual models from natural language supervision,ICML,2021
+"J. Ho, A. Jain, and P. Abbeel",Denoising diffusion probabilistic models,NeurIPS,2020
+"T. Brooks, A. Holynski, A. A. Efros",Instructpix2pix: Learning to follow image editing instructions,CVPR,2023
