@@ -1,0 +1,6 @@
+# This file is used internally by FFMPEG.
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/720p30/partial_movie_files/EncodingToEmbedding/2016333726_2248154686_223132457.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/720p30/partial_movie_files/EncodingToEmbedding/543634251_3473593859_2482633606.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/720p30/partial_movie_files/EncodingToEmbedding/543634251_1257640784_2258333076.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/720p30/partial_movie_files/EncodingToEmbedding/543634251_521324682_3194001979.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/720p30/partial_movie_files/EncodingToEmbedding/543634251_1141282389_2697677733.mp4'

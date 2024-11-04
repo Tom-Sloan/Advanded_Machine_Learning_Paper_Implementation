@@ -1,0 +1,7 @@
+# This file is used internally by FFMPEG.
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/SplittingKeyQueryValue/3529212410_14352105_223132457.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/SplittingKeyQueryValue/3040924799_3854867989_2899403973.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/SplittingKeyQueryValue/3040924799_399628741_2157232381.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/SplittingKeyQueryValue/3040924799_1005629880_220581480.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/SplittingKeyQueryValue/3040924799_1141282389_402154212.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/SplittingKeyQueryValue/3040924799_3911274160_3571648493.mp4'

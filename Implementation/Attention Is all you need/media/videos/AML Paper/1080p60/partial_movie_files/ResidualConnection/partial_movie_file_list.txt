@@ -1,0 +1,4 @@
+# This file is used internally by FFMPEG.
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/ResidualConnection/3529212410_1490363119_223132457.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/ResidualConnection/3040924799_1141282389_3881813767.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/ResidualConnection/3040924799_3911274160_2790206976.mp4'

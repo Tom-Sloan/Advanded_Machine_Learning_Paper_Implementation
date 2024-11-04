@@ -1,0 +1,13 @@
+# This file is used internally by FFMPEG.
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/TransformerProcessingDecoderVsEncoder/3529212410_2175580259_223132457.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/TransformerProcessingDecoderVsEncoder/3040924799_434943710_2797885576.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/TransformerProcessingDecoderVsEncoder/3040924799_53011153_2265574358.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/TransformerProcessingDecoderVsEncoder/3040924799_1418953998_2642639382.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/TransformerProcessingDecoderVsEncoder/3040924799_2757556112_1271116177.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/TransformerProcessingDecoderVsEncoder/3040924799_470608329_2228306055.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/TransformerProcessingDecoderVsEncoder/3040924799_3219936362_3648931008.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/TransformerProcessingDecoderVsEncoder/3040924799_695674244_3369553356.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/TransformerProcessingDecoderVsEncoder/3040924799_3071762933_2332859280.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/TransformerProcessingDecoderVsEncoder/3040924799_3252024236_3302671113.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/TransformerProcessingDecoderVsEncoder/3040924799_1141282389_2458723586.mp4'
+file 'file:/Users/Sloan/Desktop/Project_Desktop/School/5.2/HMWK/AML Paper/media/videos/AML Paper/1080p60/partial_movie_files/TransformerProcessingDecoderVsEncoder/3040924799_3911274160_972975649.mp4'
