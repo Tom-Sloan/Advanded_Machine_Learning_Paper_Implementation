@@ -9,7 +9,7 @@ This repository contains implementations of various machine learning papers, org
 
 ## Project Structure
 
--   **Implementation/**: Contains the core implementation code
+-   **src/**: Contains the core src code
     -   `*.py`: Python scripts for training and evaluation of models
     -   `models/`: Model definitions, only for papers that use custom models
     -   `trained_models/`: Directory for storing trained models, used for evaluation
@@ -27,13 +27,13 @@ The run_paper.py script has implementations for all the papers in the repository
 #### Training Vision Transformer
 
 ```bash
-python Implementation/train_vit.py --mode train --data_dir ./Data/Stoneflies --model_path @/trained_models/vit_stonefly/best_model.pt --epochs 10 --batch_size 32 --learning_rate 0.001 --augment
+python src/train_vit.py --mode train --data_dir ./Data/Stoneflies --model_path ./trained_models/vit_stonefly/best_model.pt --epochs 10 --batch_size 32 --learning_rate 0.001 --augment
 ```
 
 #### Running Grad-CAM Visualization
 
 ```bash
-python Implementation/Grad-cam.py
+python src/Grad-cam.py
 ```
 
 ## Dependencies
@@ -45,10 +45,15 @@ python Implementation/Grad-cam.py
 -   PIL
 -   matplotlib
 -   tqdm
+-   tiktoken
 
 ## Project Status
 
 The repository is actively maintained with ongoing implementations of various papers.
+
+## Datasets
+
+The data if from various places, openwebtext, and the shakespeare folders from https://github.com/karpathy/nanoGPT. The Stoneflies data from https://web.engr.oregonstate.edu/~tgd/bugid/stonefly9/.
 
 ## Zero-shot Learning
 
@@ -81,7 +86,7 @@ The repository is actively maintained with ongoing implementations of various pa
 
 ## Transfer Learning and Domain Adaptation
 
-1. **Z. Li and D. Hoiem, "Learning without Forgetting", 2016.**
+1. Z. Li and D. Hoiem, "Learning without Forgetting", 2016.
 2. B. Fernando, et.al., "Unsupervised Visual Domain Adaptation Using Subspace Alignment", ICCV 2013.
 3. Judy Hoffman, et.al. "CyCADA: Cycle-Consistent Adversarial Domain Adaptation", ICML 2018
 
@@ -112,7 +117,7 @@ The repository is actively maintained with ongoing implementations of various pa
 
 ## Vision Language models
 
-1. A. Dosovitskiy, et al., "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale", 2020.
+1. **A. Dosovitskiy, et al., "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale", 2020.**
 2. A. Radford, et al. "Learning transferable visual models from natural language supervision." ICML 2021.
 3. J, Ho, A. Jain, and P. Abbeel. "Denoising diffusion probabilistic models." NeurIPS 2020.
 4. T. Brooks, A. Holynski, A. A. Efros "Instructpix2pix: Learning to follow image editing instructions" CVPR 2023.

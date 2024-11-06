@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
+from torch.nn.init import trunc_normal_
 
 class PatchEmbedding(nn.Module):
     """
@@ -35,11 +36,19 @@ class PatchEmbedding(nn.Module):
         x = x + self.pos_embedding
         return x
 
+class LayerScale(nn.Module):
+    def __init__(self, dim, init_values=1e-5):
+        super().__init__()
+        self.gamma = nn.Parameter(init_values * torch.ones(dim))
+
+    def forward(self, x):
+        return self.gamma * x
+
 class MultiHeadAttention(nn.Module):
     """
     Multi-head self attention mechanism
     """
-    def __init__(self, embed_dim, num_heads):
+    def __init__(self, embed_dim, num_heads, dropout=0.1):
         super().__init__()
         self.num_heads = num_heads
         self.head_dim = embed_dim // num_heads
@@ -47,7 +56,9 @@ class MultiHeadAttention(nn.Module):
         
         # Linear layers for queries, keys, values
         self.qkv = nn.Linear(embed_dim, embed_dim * 3)
+        self.attn_drop = nn.Dropout(dropout)
         self.proj = nn.Linear(embed_dim, embed_dim)
+        self.proj_drop = nn.Dropout(dropout)
 
     def forward(self, x):
         b, n, c = x.shape
@@ -58,11 +69,13 @@ class MultiHeadAttention(nn.Module):
         # Compute attention scores
         attn = (q @ k.transpose(-2, -1)) * self.scale
         attn = attn.softmax(dim=-1)
+        attn = self.attn_drop(attn)
         
         # Apply attention to values
         x = attn @ v
         x = rearrange(x, 'b h n d -> b n (h d)')
         x = self.proj(x)
+        x = self.proj_drop(x)
         return x
 
 class MLP(nn.Module):
@@ -86,18 +99,21 @@ class TransformerBlock(nn.Module):
     """
     Transformer block with self-attention and MLP
     """
-    def __init__(self, embed_dim, num_heads, mlp_ratio=4., dropout=0.):
+    def __init__(self, embed_dim, num_heads, mlp_ratio=4., dropout=0.1, init_values=1e-5):
         super().__init__()
         self.norm1 = nn.LayerNorm(embed_dim)
-        self.attn = MultiHeadAttention(embed_dim, num_heads)
+        self.attn = MultiHeadAttention(embed_dim, num_heads, dropout)
+        self.ls1 = LayerScale(embed_dim, init_values)
+        self.drop1 = nn.Dropout(dropout)
+        
         self.norm2 = nn.LayerNorm(embed_dim)
         self.mlp = MLP(embed_dim, int(embed_dim * mlp_ratio), embed_dim, dropout)
+        self.ls2 = LayerScale(embed_dim, init_values)
+        self.drop2 = nn.Dropout(dropout)
 
     def forward(self, x):
-        # Self attention block with residual connection
-        x = x + self.attn(self.norm1(x))
-        # MLP block with residual connection
-        x = x + self.mlp(self.norm2(x))
+        x = x + self.drop1(self.ls1(self.attn(self.norm1(x))))
+        x = x + self.drop2(self.ls2(self.mlp(self.norm2(x))))
         return x
 
 class VisionTransformer(nn.Module):
@@ -108,6 +124,9 @@ class VisionTransformer(nn.Module):
                  num_classes=1000, embed_dim=768, depth=12, 
                  num_heads=12, mlp_ratio=4., dropout=0.):
         super().__init__()
+        
+        # Store depth as class attribute
+        self.depth = depth
         
         # Patch embedding layer
         self.patch_embed = PatchEmbedding(
@@ -141,15 +160,45 @@ class VisionTransformer(nn.Module):
         return x
 
 def create_vit_base():
-    """Creates a ViT-Base model as specified in the paper"""
-    return VisionTransformer(
+    """Creates an improved ViT-Base model"""
+    model = VisionTransformer(
         image_size=224,
         patch_size=16,
         in_channels=3,
         num_classes=1000,
         embed_dim=768,
-        depth=12,
+        depth=8,
         num_heads=12,
         mlp_ratio=4.0,
         dropout=0.1
-    ) 
+    )
+    
+    # Initialize weights with smaller std for better initial training
+    def _init_weights(m):
+        if isinstance(m, nn.Linear):
+            trunc_normal_(m.weight, std=.01)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.zeros_(m.bias)
+            nn.init.ones_(m.weight)
+
+    model.apply(_init_weights)
+    
+    # Add layer-wise learning rate decay
+    def get_layer_lr_decay(model, lr, decay_rate=0.8):
+        layers = [(n, p) for n, p in model.named_parameters()]
+        n_layers = model.depth + 2  # transformer layers + embedding + head
+        
+        layer_scales = list(decay_rate ** i for i in range(n_layers))
+        return [
+            {
+                'params': [p for n, p in layers if f'transformer.{i}.' in n],
+                'lr': lr * layer_scales[i]
+            } for i in range(model.depth)
+        ] + [
+            {'params': [p for n, p in layers if 'patch_embed' in n], 'lr': lr * layer_scales[-2]},
+            {'params': [p for n, p in layers if 'head' in n], 'lr': lr * layer_scales[-1]}
+        ]
+    
+    return model, get_layer_lr_decay
