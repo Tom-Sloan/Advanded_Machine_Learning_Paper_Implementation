@@ -1,0 +1,56 @@
+# Use Python base image
+FROM python:3.11-slim
+
+# Set environment variables
+ENV CONDA_ENV_NAME=general_purpose
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    bzip2 \
+    ca-certificates \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Miniconda
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-aarch64.sh -O ~/miniconda.sh \
+    && bash ~/miniconda.sh -b -p /opt/conda \
+    && rm ~/miniconda.sh
+
+# Add conda to path
+ENV PATH /opt/conda/bin:$PATH
+
+# Create a modified environment.yml for Apple Silicon
+COPY environment.yml /tmp/environment.yml
+RUN sed -i 's/pytorch=2.5.1/pytorch::pytorch=2.5.1/' /tmp/environment.yml \
+    && sed -i 's/torchvision=0.20.1/pytorch::torchvision=0.20.1/' /tmp/environment.yml \
+    && sed -i 's/torchaudio=2.5.1/pytorch::torchaudio=2.5.1/' /tmp/environment.yml
+
+# Create conda environment
+RUN conda env create -f /tmp/environment.yml \
+    && conda clean -afy
+
+# Activate conda environment by default
+SHELL ["conda", "run", "-n", "general_purpose", "/bin/bash", "-c"]
+
+# Set working directory
+WORKDIR /app
+
+# Copy project files
+COPY . /app/
+
+# Add MPS device detection and configuration
+RUN echo 'import torch\n\
+if torch.backends.mps.is_available():\n\
+    device = torch.device("mps")\n\
+    print("MPS device found and configured")\n\
+else:\n\
+    device = torch.device("cpu")\n\
+    print("MPS device not found, using CPU")' > /app/check_mps.py
+
+# Make run_paper.py executable
+RUN chmod +x run_paper.py
+
+# Set the default command to run run_paper.py
+CMD ["conda", "run", "--no-capture-output", "-n", "general_purpose", "python", "run_paper.py"] 

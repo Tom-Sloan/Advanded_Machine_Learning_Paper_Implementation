@@ -100,9 +100,26 @@ def pad_string(string, length):
     """Pads a string with spaces to a given length"""
     return string.ljust(length)
 
+def detect_device():
+    """Detect and return the appropriate device (cuda, mps, or cpu)"""
+    if torch.cuda.is_available():
+        return torch.device('cuda')
+    elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        return torch.device('mps')
+    return torch.device('cpu')
+
+def is_docker():
+    """Check if code is running inside a Docker container"""
+    path = '/proc/self/cgroup'
+    return os.path.exists('/.dockerenv') or (os.path.isfile(path) and any('docker' in line for line in open(path)))
+
 def run_vit_implementation(mode='train'):
     """Run the Vision Transformer implementation"""
     print("Running Vision Transformer (ViT) implementation...")
+    
+    # Get device type
+    device = detect_device()
+    device_type = device.type
     
     # Command to run ViT implementation
     args = [
@@ -110,7 +127,8 @@ def run_vit_implementation(mode='train'):
         '--data_dir', './data/Stoneflies',
         '--epochs', '30',
         '--batch_size', '32',
-        '--learning_rate', '0.001'
+        '--learning_rate', '0.001',
+        '--device', device_type
     ]
     
     if mode == 'train':
@@ -123,14 +141,17 @@ def run_gradcam_implementation(mode='eval'):
     """Run the Grad-CAM implementation"""
     print("Running Grad-CAM implementation...")
     
-    # Command to run Grad-CAM implementation
+    device = detect_device()
+    device_type = device.type
+    
     args = [
         '--mode', mode,
         '--data_dir', './data/Stoneflies',
         '--epochs', '5',
         '--batch_size', '32',
         '--learning_rate', '0.0001',
-        '--num_samples', '20'
+        '--num_samples', '20',
+        '--device', device_type
     ]
     
     cmd = f"python src/Grad-cam.py {' '.join(args)}"
@@ -371,6 +392,17 @@ def open_pdf(paper_title):
         return False
 
 def main():
+    # Add device detection message at the start of main
+    device = detect_device()
+    if is_docker():
+        print(f"\nRunning in Docker container")
+        print(f"Using device: {device.type}")
+        if device.type == 'cuda':
+            print(f"CUDA device: {torch.cuda.get_device_name(0)}")
+    else:
+        print(f"\nRunning natively")
+        print(f"Using device: {device.type}")
+    
     while True:
         # Get list of papers with their sections
         paper_names, full_citations, section_names = get_completed_papers()
