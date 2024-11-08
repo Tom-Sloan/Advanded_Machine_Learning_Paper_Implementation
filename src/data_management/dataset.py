@@ -30,6 +30,8 @@ from torchvision.transforms import (
     RandomGrayscale
 )
 import random
+from pathlib import Path
+from datasets import load_dataset
 
 class BaseDataset(ABC):
     """Abstract base class for all datasets"""
@@ -238,18 +240,205 @@ class ShakespeareWordDataset(BaseDataset):
             
         return sequences, seq_length
 
-def get_dataset(dataset_name, data_dir):
+class CityscapesDataset(Dataset, BaseDataset):
+    """Dataset class for Cityscapes image-to-image translation with side-by-side format"""
+    def __init__(self, data_dir, split='train', transform=None):
+        super().__init__()
+        self.data_dir = data_dir
+        self.split = split
+        self.transform = transform
+        self.images = self.load_data()
+        
+    def load_data(self):
+        """Load Cityscapes dataset images"""
+        # Get images from the appropriate split directory
+        split_dir = os.path.join(self.data_dir, self.split)
+        image_paths = []
+        
+        # Collect all images
+        for img_name in sorted(os.listdir(split_dir)):
+            if img_name.endswith(('.jpg', '.png')):
+                image_path = os.path.join(split_dir, img_name)
+                image_paths.append(image_path)
+        
+        print(f"Found {len(image_paths)} images in {self.split} set")
+        return image_paths
+    
+    def __len__(self):
+        return len(self.images)
+    
+    def __getitem__(self, idx):
+        # Load the combined image
+        img = Image.open(self.images[idx])
+        w, h = img.size
+        
+        # Split image into real photo (left) and semantic map (right)
+        real_img = img.crop((0, 0, w//2, h))
+        semantic_img = img.crop((w//2, 0, w, h))
+        
+        # Resize to 512x512 if needed
+        if real_img.size != (512, 512):
+            real_img = real_img.resize((512, 512), Image.BICUBIC)
+            semantic_img = semantic_img.resize((512, 512), Image.BICUBIC)
+        
+        # Convert to RGB
+        real_img = real_img.convert('RGB')
+        semantic_img = semantic_img.convert('RGB')
+        
+        # Apply transforms if specified
+        if self.transform:
+            # Use same random seed for both images to ensure consistent transforms
+            seed = np.random.randint(2147483647)
+            
+            torch.manual_seed(seed)
+            real_img = self.transform(real_img)
+            
+            torch.manual_seed(seed)
+            semantic_img = self.transform(semantic_img)
+        else:
+            # Default transform to tensor and normalize
+            to_tensor = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            ])
+            real_img = to_tensor(real_img)
+            semantic_img = to_tensor(semantic_img)
+        
+        return semantic_img, real_img  # Return semantic map as input, real photo as target
+    
+    def get_sample(self, num_samples=5):
+        """Get random samples from the dataset with visualization"""
+        if len(self.images) == 0:
+            return []
+        
+        # Create figure with subplots
+        fig, axes = plt.subplots(2, num_samples, figsize=(3*num_samples, 6))
+        
+        # Get random indices
+        indices = np.random.choice(len(self.images), num_samples, replace=False)
+        
+        samples = []
+        for idx, i in enumerate(indices):
+            # Load and split image
+            img = Image.open(self.images[i])
+            w, h = img.size
+            
+            real_img = img.crop((0, 0, w//2, h))
+            semantic_img = img.crop((w//2, 0, w, h))
+            
+            # Resize if needed
+            if real_img.size != (512, 512):
+                real_img = real_img.resize((512, 512), Image.BICUBIC)
+                semantic_img = semantic_img.resize((512, 512), Image.BICUBIC)
+            
+            # Display images
+            axes[0, idx].imshow(semantic_img)
+            axes[0, idx].set_title('Semantic Map')
+            axes[0, idx].axis('off')
+            
+            axes[1, idx].imshow(real_img)
+            axes[1, idx].set_title('Photo')
+            axes[1, idx].axis('off')
+            
+            samples.append((semantic_img, real_img))
+        
+        plt.tight_layout()
+        return fig, samples
+
+class CelebAHQDataset(Dataset, BaseDataset):
+    """Dataset class for CelebA-HQ 256x256 images"""
+    def __init__(self, data_dir=None, transform=None):
+        super().__init__()
+        self.transform = transform
+        self.data_dir = Path('./data/celeba-hq') if data_dir is None else Path(data_dir)
+        
+        # Create data directory if it doesn't exist
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Use HuggingFace datasets with local caching
+        print("Loading CelebA-HQ dataset (this may take a while the first time)...")
+        self.dataset = load_dataset(
+            "korexyz/celeba-hq-256x256",
+            cache_dir=str(self.data_dir),
+            split='train'
+        )
+        print(f"Loaded {len(self.dataset)} images from CelebA-HQ dataset")
+        print(f"Dataset cached at: {self.data_dir}")
+    
+    def load_data(self):
+        """Implement load_data to satisfy BaseDataset"""
+        return self.dataset
+    
+    def __len__(self):
+        return len(self.dataset)
+    
+    def __getitem__(self, idx):
+        # Get image and label from HuggingFace dataset
+        # Convert idx to Python int to avoid numpy.int64 issues
+        sample = self.dataset[int(idx)]
+        image = sample['image']
+        label = sample['label']  # 0 for female, 1 for male
+        
+        # Convert to tensor and normalize to [-1, 1]
+        if self.transform:
+            image = self.transform(image)
+        else:
+            transform = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            ])
+            image = transform(image)
+        
+        return image, label
+    
+    def get_sample(self, num_samples=5):
+        """Get random samples from the dataset with visualization"""
+        # Create figure with subplots
+        fig, axes = plt.subplots(1, num_samples, figsize=(3*num_samples, 3))
+        if num_samples == 1:
+            axes = [axes]
+        
+        # Get random indices and convert to Python int
+        indices = [int(i) for i in np.random.choice(len(self), num_samples, replace=False)]
+        
+        samples = []
+        for idx, ax in zip(indices, axes):
+            # Get image and label
+            sample = self.dataset[idx]
+            image = sample['image']
+            label = sample['label']
+            gender = 'Male' if label == 1 else 'Female'
+            
+            # Display image
+            ax.imshow(image)
+            ax.axis('off')
+            ax.set_title(f'{gender}', pad=10)
+            
+            samples.append((image, label))
+        
+        plt.suptitle('CelebA-HQ Samples', y=1.05)
+        plt.tight_layout()
+        return fig, samples
+
+def get_dataset(dataset_name, data_dir=None, split='train', transform=None):
     """Factory function to get the appropriate dataset"""
     datasets = {
         'stoneflies': StoneflyDataset,
         'shakespeare_char': ShakespeareCharDataset,
-        'shakespeare_word': ShakespeareWordDataset
+        'shakespeare_word': ShakespeareWordDataset,
+        'cityscapes': CityscapesDataset,
+        'celeba-hq': CelebAHQDataset
     }
     
     if dataset_name not in datasets:
         raise ValueError(f"Dataset {dataset_name} not found. Available datasets: {list(datasets.keys())}")
-        
-    return datasets[dataset_name](data_dir)
+    
+    if dataset_name == 'cityscapes':
+        return datasets[dataset_name](data_dir, split, transform)
+    elif dataset_name == 'celeba-hq':
+        return datasets[dataset_name](transform=transform)
+    else:
+        return datasets[dataset_name](data_dir)
 
 def get_training_transforms():
     """Get enhanced training transforms with stronger augmentation"""

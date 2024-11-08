@@ -41,6 +41,7 @@ env/
 *.ckpt
 logs/
 wandb/
+data/
 
 # Jupyter Notebook
 .ipynb_checkpoints

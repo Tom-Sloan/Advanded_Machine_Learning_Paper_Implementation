@@ -50,31 +50,42 @@
 
 ## GANs
 
-1. Isola, Phillip, et al. "Image-to-Image Translation with Conditional Adversarial Networks," CVPR 2017.
+1. **Isola, Phillip, et al. "Image-to-Image Translation with Conditional Adversarial Networks," CVPR 2017.**
 
-    - Introduced the Pix2Pix framework for image-to-image translation using conditional GANs.
-    - Demonstrated that conditional adversarial networks can learn a mapping from input images to output images across various tasks.
-    - Highlighted the effectiveness of adversarial loss in producing high-quality, realistic translated images.
+    - Introduced Pix2Pix framework for supervised image-to-image translation using conditional GANs
+    - Demonstrated effectiveness on multiple tasks including edges→photos, labels→scenes, and maps→aerial photos
+    - Combined adversarial loss with L1 loss to produce both realistic and accurate translations
+    - Proposed PatchGAN discriminator that penalizes structure at the scale of image patches
 
-2. Zhu, Jun-Yan, et al. "Unpaired Image-to-Image Translation Using Cycle-Consistent Adversarial Networks," ICCV 2017.
+2. **Ho, Jonathan, et al. "Denoising Diffusion Probabilistic Models," NeurIPS 2020.**
+
+    - Introduced DDPM, a new approach to generative modeling that combines the best aspects of VAEs and GANs
+    - Proposed a diffusion process that gradually adds noise to data and learns to reverse this process
+    - Achieved state-of-the-art image generation quality through simple training objective
+    - Demonstrated superior sample diversity compared to GANs while maintaining high quality
+    - Introduced diffusion models for high-quality image synthesis, offering an alternative to GANs.
+    - Modeled the data distribution by iteratively denoising samples from a Gaussian distribution.
+    - Achieved state-of-the-art results in image generation with better diversity and fidelity.
+
+3. Zhu, Jun-Yan, et al. "Unpaired Image-to-Image Translation Using Cycle-Consistent Adversarial Networks," ICCV 2017.
 
     - Proposed CycleGAN, enabling image-to-image translation without paired training data.
     - Introduced cycle-consistency loss to enforce that the translation from one domain to another is invertible.
     - Achieved impressive results in style transfer and domain adaptation tasks using unpaired datasets.
 
-3. Karras, Tero, et al. "A Style-Based Generator Architecture for Generative Adversarial Networks," CVPR 2019.
+4. Karras, Tero, et al. "A Style-Based Generator Architecture for Generative Adversarial Networks," CVPR 2019.
 
     - Developed StyleGAN, introducing a new generator architecture that controls image synthesis through style vectors at each convolution layer.
     - Enabled explicit control over features at different levels, such as overall style and fine details.
     - Produced high-resolution, photorealistic images with unprecedented quality and variation.
 
-4. Tero Karras, et al. "Progressive Growing of GANs for Improved Quality, Stability, and Variation," ICLR 2018.
+5. Tero Karras, et al. "Progressive Growing of GANs for Improved Quality, Stability, and Variation," ICLR 2018.
 
     - Introduced a training methodology where both the generator and discriminator are progressively grown, starting from low resolution.
     - Improved training stability and reduced training time for high-resolution image generation.
     - Achieved state-of-the-art results in generating high-quality images with increased diversity.
 
-5. Choi, Yunjey, et al. "StarGAN: Unified Generative Adversarial Networks for Multi-Domain Image-to-Image Translation," CVPR 2018.
+6. Choi, Yunjey, et al. "StarGAN: Unified Generative Adversarial Networks for Multi-Domain Image-to-Image Translation," CVPR 2018.
     - Proposed StarGAN, capable of performing image-to-image translation across multiple domains using a single model.
     - Incorporated domain labels to guide the translation process, enabling flexible and scalable multi-domain translation.
     - Simplified the architecture by avoiding the need for multiple models for each domain pair.
@@ -193,7 +204,7 @@
 
 ## Transformers, Language Models
 
-1. Devlin, Jacob, et al., "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding," NAACL 2019.
+1. **Devlin, Jacob, et al., "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding," NAACL 2019.**
 
     - Introduced BERT, a pre-trained deep bidirectional Transformer model for NLP tasks.
     - Utilized masked language modeling and next sentence prediction for effective pre-training.
@@ -236,13 +247,7 @@
     - Achieved strong zero-shot performance on various visual classification tasks.
     - Bridged vision and language domains, enabling models to understand and relate visual content to natural language.
 
-3. Ho, Jonathan, et al., "Denoising Diffusion Probabilistic Models," NeurIPS 2020.
-
-    - Introduced diffusion models for high-quality image synthesis, offering an alternative to GANs.
-    - Modeled the data distribution by iteratively denoising samples from a Gaussian distribution.
-    - Achieved state-of-the-art results in image generation with better diversity and fidelity.
-
-4. T. Brooks, A. Holynski, and A. A. Efros, "InstructPix2Pix: Learning to Follow Image Editing Instructions," CVPR 2023.
+3. T. Brooks, A. Holynski, and A. A. Efros, "InstructPix2Pix: Learning to Follow Image Editing Instructions," CVPR 2023.
     - Developed InstructPix2Pix, enabling image editing based on textual instructions.
     - Combined language understanding with image-to-image translation for interactive image manipulation.
     - Demonstrated the ability to perform complex edits guided by natural language prompts.
