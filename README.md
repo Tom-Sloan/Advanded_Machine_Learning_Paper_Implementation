@@ -71,7 +71,7 @@ The data if from various places, openwebtext, and the shakespeare folders from h
 
 ## GANs
 
-1. Isola, Phillip, et al. "Image-to-image translation with conditional adversarial networks." CVPR, 2017.
+1. **Isola, Phillip, et al. "Image-to-image translation with conditional adversarial networks." CVPR, 2017.**
 2. Zhu, Jun-Yan, et al. "Unpaired image-to-image translation using cycle-consistent adversarial networks" ICCV, 2017.
 3. Karras, Tero, et al. "A style-based generator architecture for generative adversarial networks" CVPR 2019.
 4. Tero Karras, et al. "Progressive Growing of GANs for Improved Quality, Stability, and Variation", ICLR, 2018.
@@ -109,7 +109,7 @@ The data if from various places, openwebtext, and the shakespeare folders from h
 
 ## Transformers, Language models
 
-1. Kenton, Jacob, et al. "Bert: Pre-training of deep bidirectional transformers for language understanding." ACL 2019.
+1. **Kenton, Jacob, et al. "Bert: Pre-training of deep bidirectional transformers for language understanding." ACL 2019.**
 2. Radford, Alec, et al. "Improving language understanding by generative pre-training." (2018).
 3. X. L. Li and P. Liang. "Prefix-tuning: Optimizing continuous prompts for generation." ACL, 2021.
 4. Hu, Edward J., et al. "Lora: Low-rank adaptation of large language models" ICLR 2022.
@@ -119,5 +119,5 @@ The data if from various places, openwebtext, and the shakespeare folders from h
 
 1. **A. Dosovitskiy, et al., "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale", 2020.**
 2. A. Radford, et al. "Learning transferable visual models from natural language supervision." ICML 2021.
-3. J, Ho, A. Jain, and P. Abbeel. "Denoising diffusion probabilistic models." NeurIPS 2020.
+3. **J, Ho, A. Jain, and P. Abbeel. "Denoising diffusion probabilistic models." NeurIPS 2020.**
 4. T. Brooks, A. Holynski, A. A. Efros "Instructpix2pix: Learning to follow image editing instructions" CVPR 2023.
