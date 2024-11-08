@@ -19,7 +19,7 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
     && rm ~/miniconda.sh
 
 # Add conda to path
-ENV PATH /opt/conda/bin:$PATH
+ENV PATH=/opt/conda/bin:$PATH
 
 # Create conda environment from environment.yml
 COPY environment.yml /tmp/environment.yml
@@ -32,11 +32,16 @@ SHELL ["conda", "run", "-n", "general_purpose", "/bin/bash", "-c"]
 # Set working directory
 WORKDIR /app
 
-# Copy project files
-COPY . /app/
+# Copy only necessary files
+COPY src/ /app/src/
+COPY run_paper.py /app/
+COPY data/download_dataset.sh /app/data/
 
-# Make run_paper.py executable
-RUN chmod +x run_paper.py
+# Make scripts executable
+RUN chmod +x run_paper.py data/download_dataset.sh
+
+# Create necessary directories
+RUN mkdir -p /app/trained_models /app/paper_management/PDFs
 
 # Set the default command to run run_paper.py
 CMD ["conda", "run", "--no-capture-output", "-n", "general_purpose", "python", "run_paper.py"] 

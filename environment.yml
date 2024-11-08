@@ -44,5 +44,6 @@ dependencies:
           - runs
           - propcache
           - opencv-python
+          - inquirer
 
 prefix: /opt/anaconda3/envs/general_purpose

@@ -19,7 +19,7 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-aarch64.sh 
     && rm ~/miniconda.sh
 
 # Add conda to path
-ENV PATH /opt/conda/bin:$PATH
+ENV PATH=/opt/conda/bin:$PATH
 
 # Create a modified environment.yml for Apple Silicon
 COPY environment.yml /tmp/environment.yml
@@ -37,8 +37,16 @@ SHELL ["conda", "run", "-n", "general_purpose", "/bin/bash", "-c"]
 # Set working directory
 WORKDIR /app
 
-# Copy project files
-COPY . /app/
+# Copy only necessary files
+COPY src/ /app/src/
+COPY run_paper.py /app/
+COPY data/download_dataset.sh /app/data/
+
+# Make scripts executable
+RUN chmod +x run_paper.py data/download_dataset.sh
+
+# Create necessary directories
+RUN mkdir -p /app/trained_models /app/paper_management/PDFs
 
 # Add MPS device detection and configuration
 RUN echo 'import torch\n\
@@ -49,8 +57,5 @@ else:\n\
     device = torch.device("cpu")\n\
     print("MPS device not found, using CPU")' > /app/check_mps.py
 
-# Make run_paper.py executable
-RUN chmod +x run_paper.py
-
 # Set the default command to run run_paper.py
-CMD ["conda", "run", "--no-capture-output", "-n", "general_purpose", "python", "run_paper.py"] 
+CMD ["conda", "run", "--no-capture-output", "-n", "general_purpose", "python", "run_paper.py"]

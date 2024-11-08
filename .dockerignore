@@ -1,21 +1,56 @@
+# Version control
 .git
 .gitignore
+.gitattributes
+
+# Python
 __pycache__
 *.pyc
 *.pyo
 *.pyd
 .Python
-env
-pip-log.txt
-pip-delete-this-directory.txt
-.tox
+*.py[cod]
+*$py.class
+.pytest_cache
 .coverage
 .coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.pytest_cache
+
+# Environments
 .env
-.venv 
+.venv
+env/
+venv/
+ENV/
+
+# Data and models (these should be downloaded/generated after container setup)
+data/*
+trained_models/*
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.h5
+
+# Logs and caches
+*.log
+.cache
+logs/
+wandb/
+runs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Documentation and misc
+docs/
+*.pdf
+README.md
+LICENSE
+*.md
+
+# Keep specific files
+!data/download_dataset.sh
+!environment.yml
