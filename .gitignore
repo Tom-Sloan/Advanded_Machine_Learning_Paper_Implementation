@@ -41,9 +41,7 @@ env/
 *.ckpt
 logs/
 wandb/
-data/
-
-models/pretrained/
+data/*
 
 # Then un-ignore specific files/directories
 !data/Stoneflies/
@@ -52,6 +50,7 @@ models/pretrained/
 !data/shakespeare_word/prepare.py
 !data/shakespeare_char/prepare.py
 
+models/pretrained/
 trained_models/
 
 # Jupyter Notebook
