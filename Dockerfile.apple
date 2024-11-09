@@ -37,10 +37,14 @@ SHELL ["conda", "run", "-n", "general_purpose", "/bin/bash", "-c"]
 # Set working directory
 WORKDIR /app
 
-# Copy only necessary files
-COPY src/ /app/src/
-COPY run_paper.py /app/
-COPY data/download_dataset.sh /app/data/
+# Copy essential files first
+COPY descriptions.md ./
+COPY environment.yml ./
+COPY run_paper.py ./
+
+# Copy source code and scripts
+COPY src/ ./src/
+COPY data/download_dataset.sh ./data/
 
 # Make scripts executable
 RUN chmod +x run_paper.py data/download_dataset.sh

@@ -46,10 +46,7 @@ runs/
 
 # Documentation and misc
 docs/
-*.pdf
-README.md
 LICENSE
-*.md
 
 # Keep specific files
 !data/download_dataset.sh
