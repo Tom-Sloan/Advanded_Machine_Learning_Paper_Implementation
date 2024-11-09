@@ -45,15 +45,16 @@ data/*
 !data/openwebtext/
 data/openwebtext/*
 !data/openwebtext/prepare.py
-
+!data/openwebtext/readme.md
 !data/shakespeare_word/
 data/shakespeare_word/*
 !data/shakespeare_word/prepare.py
+!data/shakespeare_word/readme.md
 
 !data/shakespeare_char/
 data/shakespeare_char/*
 !data/shakespeare_char/prepare.py
-
+!data/shakespeare_char/readme.md
 !data/download_dataset.sh
 
 models/pretrained/
