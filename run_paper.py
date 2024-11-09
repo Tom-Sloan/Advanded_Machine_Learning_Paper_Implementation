@@ -456,6 +456,44 @@ def run_lora_implementation(mode='train'):
     cmd = f"python src/train_lora.py {' '.join(args)}"
     os.system(cmd)
 
+# Add this new function after the other run_* functions and before main()
+def run_all_implementations():
+    """Run all paper implementations in training mode"""
+    print("\nRunning all paper implementations in training mode...")
+    
+    # Get device type
+    device = detect_device()
+    device_type = device.type
+    print(f"Using device: {device_type}")
+    if device_type == 'cuda':
+        print(f"CUDA device: {torch.cuda.get_device_name(0)}")
+    
+    # Vision Transformer
+    print("\n1. Running Vision Transformer (ViT) implementation...")
+    run_vit_implementation('train')
+    
+    # Grad-CAM
+    print("\n2. Running Grad-CAM implementation...")
+    run_gradcam_implementation('train')
+    
+    # BERT
+    print("\n3. Running BERT implementation...")
+    run_bert_implementation('train')
+    
+    # Pix2Pix
+    print("\n4. Running Pix2Pix implementation...")
+    run_pix2pix_implementation('train')
+    
+    # DDPM
+    print("\n5. Running DDPM implementation...")
+    run_ddpm_implementation('train')
+    
+    # LoRA
+    print("\n6. Running LoRA implementation...")
+    run_lora_implementation('train')
+    
+    print("\nAll implementations have completed training!")
+
 def main():
     # Add device detection message at the start of main
     device = detect_device()
@@ -476,8 +514,8 @@ def main():
             print("No paper implementations found!")
             return
         
-        # Add dataset sampling option to main menu
-        main_choices = ['View Papers', 'Sample Dataset', 'Exit']
+        # Add Run All option to main menu
+        main_choices = ['View Papers', 'Sample Dataset', 'Run All Implementations', 'Exit']
         
         questions = [
             inquirer.List('action',
@@ -508,6 +546,12 @@ def main():
             dataset_answer = inquirer.prompt(dataset_question)
             if dataset_answer['dataset'] != 'Back':
                 sample_dataset(dataset_answer['dataset'].lower())
+            continue
+            
+        elif main_answer['action'] == 'Run All Implementations':
+            # Confirm before running all implementations
+            if inquirer.confirm("This will run all implementations in training mode. Continue?", default=False):
+                run_all_implementations()
             continue
             
         elif main_answer['action'] == 'View Papers':

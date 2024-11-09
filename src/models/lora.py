@@ -1,165 +1,121 @@
 import torch
 import torch.nn as nn
-from transformers import AutoModelForImageClassification, AutoImageProcessor
 import math
-from typing import Dict, List, Optional, Union
+from transformers import AutoModelForImageClassification
+import os
 
-class LoRALinear(nn.Module):
-    """Linear layer with LoRA adaptation"""
-    def __init__(
-        self, 
-        linear_layer: nn.Linear,
-        rank: int = 8,
-        alpha: int = 16,
-        dropout: float = 0.1
-    ):
+class LoRALayer(nn.Module):
+    """Low-Rank Adaptation layer"""
+    def __init__(self, in_features, out_features, rank=4, alpha=1):
         super().__init__()
-        self.linear = linear_layer
         self.rank = rank
         self.alpha = alpha
+        self.scaling = alpha / rank
         
-        # Initialize LoRA matrices
-        self.lora_a = nn.Linear(linear_layer.in_features, rank, bias=False)
-        self.lora_b = nn.Linear(rank, linear_layer.out_features, bias=False)
-        self.dropout = nn.Dropout(dropout)
+        # Low-rank matrices
+        self.lora_A = nn.Parameter(torch.zeros(in_features, rank))
+        self.lora_B = nn.Parameter(torch.zeros(rank, out_features))
         
         # Initialize weights
-        nn.init.normal_(self.lora_a.weight, mean=0, std=1/rank)
-        nn.init.zeros_(self.lora_b.weight)
+        nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
+        nn.init.zeros_(self.lora_B)
         
-        # Freeze original layer
-        for param in self.linear.parameters():
-            param.requires_grad = False
-            
-    def forward(self, x):
-        # Original frozen path
-        orig_out = self.linear(x)
-        
-        # LoRA path
-        lora_out = self.lora_b(self.dropout(self.lora_a(x)))
-        
-        # Combine with scaling
-        return orig_out + (self.alpha / self.rank) * lora_out
-
-def create_lora_model(
-    model_name: str = "google/vit-base-patch16-224-in21k",
-    num_classes: int = None,
-    rank: int = 8,
-    alpha: int = 16,
-    target_modules: List[str] = ["query", "value"],
-    dropout: float = 0.1,
-    cache_dir: Optional[str] = None
-) -> nn.Module:
-    """Creates a ViT model with LoRA layers"""
+        # Store original layer
+        self.original_layer = None
     
-    # Load base model
+    def forward(self, x):
+        # Low-rank adaptation
+        lora_output = (x @ self.lora_A @ self.lora_B) * self.scaling
+        if self.original_layer is not None:
+            return self.original_layer(x) + lora_output
+        return lora_output
+
+def create_lora_model(model_name="google/vit-large-patch16-224", num_classes=None, cache_dir="./models/pretrained"):
+    """Create a pretrained model with LoRA layers"""
+    # Create cache directory if it doesn't exist
+    os.makedirs(cache_dir, exist_ok=True)
+    print(f"Using cache directory: {cache_dir}")
+    
+    # Load pretrained model
+    print(f"Loading pretrained model: {model_name}")
     model = AutoModelForImageClassification.from_pretrained(
         model_name,
-        num_labels=num_classes if num_classes else 1000,
+        num_labels=num_classes,
         ignore_mismatched_sizes=True,
         cache_dir=cache_dir
     )
     
-    # Add LoRA layers
-    model = add_lora_layers(
-        model,
-        rank=rank,
-        alpha=alpha,
-        target_modules=target_modules,
-        dropout=dropout
-    )
+    # Freeze all parameters
+    for param in model.parameters():
+        param.requires_grad = False
     
+    print(f"Model loaded and cached in: {cache_dir}")
     return model
 
-def add_lora_layers(
-    model: nn.Module,
-    rank: int = 8,
-    alpha: int = 16,
-    target_modules: List[str] = ["query", "value"],
-    dropout: float = 0.1
-) -> nn.Module:
-    """Adds LoRA layers to target modules in the model"""
+def add_lora_layers(model, rank=4, alpha=1, target_modules=None):
+    """Add LoRA layers to a model's target modules"""
+    # Default target modules for transformer models
+    if target_modules is None:
+        target_modules = [
+            "query",
+            "key",
+            "value",
+            "output.dense",
+            "intermediate.dense"
+        ]
+    
+    # Keep track of added LoRA layers
+    lora_layers = []
     
     for name, module in model.named_modules():
-        # Check if current module name contains any target module name
         if any(target in name for target in target_modules):
             if isinstance(module, nn.Linear):
-                # Replace with LoRA version
+                # Create LoRA layer
+                lora = LoRALayer(
+                    in_features=module.in_features,
+                    out_features=module.out_features,
+                    rank=rank,
+                    alpha=alpha
+                )
+                
+                # Store original layer
+                lora.original_layer = module
+                
+                # Replace the original layer with LoRA
                 parent_name = '.'.join(name.split('.')[:-1])
                 child_name = name.split('.')[-1]
-                parent = model
+                parent_module = model
                 for part in parent_name.split('.'):
                     if part:
-                        parent = getattr(parent, part)
-                setattr(parent, child_name, LoRALinear(
-                    module,
-                    rank=rank,
-                    alpha=alpha,
-                    dropout=dropout
-                ))
+                        parent_module = getattr(parent_module, part)
+                setattr(parent_module, child_name, lora)
+                
+                # Track the LoRA layer
+                lora_layers.append(lora)
+                print(f"Added LoRA to {name}")
     
+    if not lora_layers:
+        print("Warning: No LoRA layers were added. Check target_modules parameter.")
+        print("Available modules:")
+        for name, _ in model.named_modules():
+            print(f"  {name}")
+    else:
+        print(f"Added {len(lora_layers)} LoRA layers")
+    
+    # Store LoRA layers in model for easy access
+    model.lora_layers = lora_layers
     return model
 
-def get_lora_params(model: nn.Module) -> List[nn.Parameter]:
-    """Gets all trainable LoRA parameters"""
+def get_lora_params(model):
+    """Get only LoRA parameters for training"""
+    if not hasattr(model, 'lora_layers'):
+        raise ValueError("No LoRA layers found in model. Run add_lora_layers first.")
+    
     params = []
-    for module in model.modules():
-        if isinstance(module, LoRALinear):
-            params.extend([module.lora_a.weight, module.lora_b.weight])
+    for layer in model.lora_layers:
+        params.extend([layer.lora_A, layer.lora_B])
+    
+    if not params:
+        raise ValueError("No LoRA parameters found!")
+    
     return params
-
-def evaluate_and_compare(
-    model: nn.Module,
-    test_loader: torch.utils.data.DataLoader,
-    device: torch.device,
-    processor: AutoImageProcessor,
-    id2label: Dict[int, str]
-) -> None:
-    """Evaluates and compares original vs LoRA model predictions"""
-    model.eval()
-    all_preds = []
-    all_orig_preds = []
-    all_labels = []
-    
-    with torch.no_grad():
-        for batch in test_loader:
-            inputs = batch["pixel_values"].to(device)
-            labels = batch["labels"].to(device)
-            
-            # Get predictions
-            outputs = model(inputs)
-            logits = outputs.logits
-            preds = torch.argmax(logits, dim=1)
-            
-            # Get original model predictions (without LoRA influence)
-            # Temporarily zero out LoRA contributions
-            for module in model.modules():
-                if isinstance(module, LoRALinear):
-                    module.alpha = 0
-            orig_outputs = model(inputs)
-            orig_logits = orig_outputs.logits
-            orig_preds = torch.argmax(orig_logits, dim=1)
-            # Restore LoRA contributions
-            for module in model.modules():
-                if isinstance(module, LoRALinear):
-                    module.alpha = alpha
-            
-            # Store predictions
-            all_preds.extend(preds.cpu().numpy())
-            all_orig_preds.extend(orig_preds.cpu().numpy())
-            all_labels.extend(labels.cpu().numpy())
-    
-    # Print comparison
-    print("\nPrediction Comparison (Original/LoRA/True):")
-    print("-" * 50)
-    for orig_pred, lora_pred, true_label in zip(all_orig_preds, all_preds, all_labels):
-        print(f"{id2label[orig_pred]}/{id2label[lora_pred]}/{id2label[true_label]}")
-    
-    # Calculate accuracies
-    orig_correct = sum(p == l for p, l in zip(all_orig_preds, all_labels))
-    lora_correct = sum(p == l for p, l in zip(all_preds, all_labels))
-    total = len(all_labels)
-    
-    print("\nAccuracy Comparison:")
-    print(f"Original Model: {100 * orig_correct / total:.2f}%")
-    print(f"LoRA Model: {100 * lora_correct / total:.2f}%") 

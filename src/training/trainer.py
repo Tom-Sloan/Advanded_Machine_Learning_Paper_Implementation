@@ -33,6 +33,9 @@ class Trainer:
                 lam = lam.to(self.device)
                 
                 outputs = self.model(inputs)
+                if hasattr(outputs, 'logits'):
+                    outputs = outputs.logits
+                    
                 loss = lam.mean() * self.criterion(outputs, label1) + (1 - lam.mean()) * self.criterion(outputs, label2)
                 _, predicted = outputs.max(1)
                 total += label1.size(0)
@@ -41,6 +44,9 @@ class Trainer:
             else:
                 labels = labels.to(self.device)
                 outputs = self.model(inputs)
+                if hasattr(outputs, 'logits'):
+                    outputs = outputs.logits
+                    
                 loss = self.criterion(outputs, labels)
                 _, predicted = outputs.max(1)
                 total += labels.size(0)
@@ -84,6 +90,9 @@ class Trainer:
                 labels = labels.to(self.device)
                 
                 outputs = self.model(inputs)
+                if hasattr(outputs, 'logits'):
+                    outputs = outputs.logits
+                    
                 _, predicted = outputs.max(1)
                 total += labels.size(0)
                 correct += predicted.eq(labels).sum().item()
