@@ -223,7 +223,7 @@ def run_pix2pix_implementation(mode='train'):
         '--mode', mode,
         '--data_dir', './data/cityscapes',
         '--epochs', '100',
-        '--batch_size', '64',
+        '--batch_size', '32',
         '--learning_rate', '0.0002'
     ]
     
@@ -391,6 +391,71 @@ def open_pdf(paper_title):
         print(f"\nError opening PDF: {str(e)}")
         return False
 
+def run_lora_implementation(mode='train'):
+    """Run the LoRA implementation"""
+    print("Running LoRA implementation...")
+    
+    device = detect_device()
+    device_type = device.type
+    
+    if mode == 'train':
+        # Ask about checkpoint
+        questions = [
+            inquirer.List('checkpoint',
+                         message="Would you like to resume from a checkpoint?",
+                         choices=['No', 'Yes', 'Cancel'])
+        ]
+        checkpoint_answer = inquirer.prompt(questions)
+        
+        if checkpoint_answer['checkpoint'] == 'Cancel':
+            return
+            
+        checkpoint_arg = []
+        if checkpoint_answer['checkpoint'] == 'Yes':
+            # List available checkpoints
+            checkpoint_dir = Path('./trained_models/lora')
+            if checkpoint_dir.exists():
+                checkpoints = list(checkpoint_dir.glob('model_epoch_*.pt'))
+                if checkpoints:
+                    checkpoint_choices = [ckpt.name for ckpt in checkpoints] + ['Cancel']
+                    checkpoint_question = [
+                        inquirer.List('checkpoint_file',
+                                    message="Select checkpoint to resume from:",
+                                    choices=checkpoint_choices)
+                    ]
+                    checkpoint_file = inquirer.prompt(checkpoint_question)
+                    
+                    if checkpoint_file['checkpoint_file'] == 'Cancel':
+                        return
+                        
+                    checkpoint_arg = ['--checkpoint', f'trained_models/lora/{checkpoint_file["checkpoint_file"]}']
+                else:
+                    print("No checkpoints found.")
+                    if not inquirer.confirm("Continue without checkpoint?", default=True):
+                        return
+            else:
+                print("No checkpoints directory found.")
+                if not inquirer.confirm("Continue without checkpoint?", default=True):
+                    return
+    
+    # Base arguments
+    args = [
+        '--mode', mode,
+        '--data_dir', './data/Stoneflies',
+        '--epochs', '10',
+        '--batch_size', '32',
+        '--learning_rate', '1e-3',
+        '--lora_rank', '4',
+        '--lora_alpha', '1'
+    ]
+    
+    # Add checkpoint argument if specified
+    if mode == 'train' and checkpoint_arg:
+        args.extend(checkpoint_arg)
+    
+    cmd = f"python src/train_lora.py {' '.join(args)}"
+    os.system(cmd)
+
 def main():
     # Add device detection message at the start of main
     device = detect_device()
@@ -516,6 +581,11 @@ def main():
                         run_ddpm_implementation('train')
                     elif action['action'] == 'Evaluate':
                         run_ddpm_implementation('eval')
+                elif "LoRA: Low-Rank Adaptation of Large Language Models" in selected_paper:
+                    if action['action'] == 'Train and Evaluate':
+                        run_lora_implementation('train')
+                    elif action['action'] == 'Evaluate':
+                        run_lora_implementation('eval')
                 else:
                     print(f"Demo for paper '{selected_paper}' is not yet available.")
 

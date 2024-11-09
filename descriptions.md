@@ -222,7 +222,7 @@
     - Reduced the number of trainable parameters needed for fine-tuning large models.
     - Enabled efficient adaptation to downstream tasks without full model retraining.
 
-4. Hu, Edward J., et al., "LoRA: Low-Rank Adaptation of Large Language Models," ICLR 2022.
+4. **Hu, Edward J., et al., "LoRA: Low-Rank Adaptation of Large Language Models," ICLR 2022.**
 
     - Introduced LoRA, a technique for fine-tuning language models by injecting trainable rank-decomposition matrices.
     - Significantly reduced memory requirements and computational costs during adaptation.

@@ -145,6 +145,9 @@ class StoneflyDataset(Dataset, BaseDataset):
             # Get model prediction
             with torch.no_grad():
                 output = model(input_tensor)
+                # Handle HuggingFace model output
+                if hasattr(output, 'logits'):
+                    output = output.logits
                 pred_idx = torch.argmax(output).item()
             
             # Create visualization
