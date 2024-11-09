@@ -42,13 +42,19 @@ env/
 logs/
 wandb/
 data/*
-
-# Then un-ignore specific files/directories
-!data/Stoneflies/
-!data/download_dataset.sh
+!data/openwebtext/
+data/openwebtext/*
 !data/openwebtext/prepare.py
+
+!data/shakespeare_word/
+data/shakespeare_word/*
 !data/shakespeare_word/prepare.py
+
+!data/shakespeare_char/
+data/shakespeare_char/*
 !data/shakespeare_char/prepare.py
+
+!data/download_dataset.sh
 
 models/pretrained/
 trained_models/
