@@ -43,6 +43,17 @@ logs/
 wandb/
 data/
 
+models/pretrained/
+
+# Then un-ignore specific files/directories
+!data/Stoneflies/
+!data/download_dataset.sh
+!data/openwebtext/prepare.py
+!data/shakespeare_word/prepare.py
+!data/shakespeare_char/prepare.py
+
+trained_models/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 
