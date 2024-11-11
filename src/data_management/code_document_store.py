@@ -42,56 +42,54 @@ class CodeDocumentStore(DocumentStore):
         self.add_documents(documents, doc_ids)
         print(f"Loaded {len(documents)} chunks from {len(set(doc_id.split('#')[0] for doc_id in doc_ids))} files")
         
-    def chunk_code_content(self, content: str, file_path: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
+    def chunk_code_content(self, content: str, file_path: str, chunk_size: int = 1500, overlap: int = 500) -> List[str]:
         """Split code/text content into overlapping chunks"""
         chunks = []
         
         # Handle markdown files differently
         if file_path.endswith('.md'):
             # Split on headers and keep context
-            lines = content.split('\n')
-            current_chunk = []
-            current_size = 0
-            
-            for line in lines:
-                if line.startswith('#') and current_chunk:
-                    chunks.append('\n'.join(current_chunk))
-                    current_chunk = []
-                    current_size = 0
-                
-                current_chunk.append(line)
-                current_size += len(line)
-                
-                if current_size >= chunk_size:
-                    chunks.append('\n'.join(current_chunk))
-                    # Keep last few lines for context
-                    current_chunk = current_chunk[-5:]
-                    current_size = sum(len(line) for line in current_chunk)
-            
-            if current_chunk:
-                chunks.append('\n'.join(current_chunk))
-                
+            sections = content.split('\n## ')
+            for section in sections:
+                if section.strip():
+                    chunks.append(section)
+                    
         else:  # Python files
             # Split on class/function definitions while maintaining context
             lines = content.split('\n')
             current_chunk = []
-            current_size = 0
+            current_class = None
+            current_func = None
             
             for line in lines:
-                if (line.startswith('def ') or line.startswith('class ')) and current_chunk:
-                    chunks.append('\n'.join(current_chunk))
-                    # Keep file path and current class/function for context
+                # Track class and function context
+                if line.startswith('class '):
+                    current_class = line
+                    if current_chunk:  # Save previous chunk
+                        chunks.append('\n'.join(current_chunk))
                     current_chunk = [f"File: {file_path}", line]
-                    current_size = len(line)
+                elif line.startswith('def '):
+                    current_func = line
+                    if current_class:  # Keep class context for methods
+                        if current_chunk and current_chunk[0] != current_class:
+                            chunks.append('\n'.join(current_chunk))
+                        current_chunk = [current_class, line]
+                    else:
+                        if current_chunk:
+                            chunks.append('\n'.join(current_chunk))
+                        current_chunk = [f"File: {file_path}", line]
                 else:
                     current_chunk.append(line)
-                    current_size += len(line)
                     
-                    if current_size >= chunk_size:
-                        chunks.append('\n'.join(current_chunk))
-                        # Keep some context
-                        current_chunk = current_chunk[-10:]  # Keep last 10 lines
-                        current_size = sum(len(line) for line in current_chunk)
+                # Split if chunk gets too large
+                if len('\n'.join(current_chunk)) >= chunk_size:
+                    chunks.append('\n'.join(current_chunk))
+                    # Keep context for next chunk
+                    current_chunk = []
+                    if current_class:
+                        current_chunk.append(current_class)
+                    if current_func:
+                        current_chunk.append(current_func)
             
             if current_chunk:
                 chunks.append('\n'.join(current_chunk))
@@ -100,9 +98,18 @@ class CodeDocumentStore(DocumentStore):
     
     def search_code(self, query: str, k: int = 5) -> Dict:
         """Search codebase with a natural language query"""
-        # Encode query
+        # Tokenize and encode query
+        inputs = self.tokenizer(
+            query,
+            max_length=512,
+            padding=True,
+            truncation=True,
+            return_tensors="pt"
+        )
+        
+        # Get query embedding
         with torch.no_grad():
-            query_embedding = self.encoder(query).pooler_output.numpy()
+            query_embedding = self.encoder(**inputs).pooler_output.numpy()
         
         # Search
         results = self.search(query_embedding, k)
@@ -118,4 +125,4 @@ class CodeDocumentStore(DocumentStore):
                 'score': float(score)
             })
         
-        return formatted_results 
+        return formatted_results

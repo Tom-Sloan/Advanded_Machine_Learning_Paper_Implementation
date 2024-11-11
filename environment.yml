@@ -54,5 +54,6 @@ dependencies:
           - sentencepiece
           - protobuf
           - transformers
+          - PyPDF2
 
 prefix: /opt/anaconda3/envs/general_purpose

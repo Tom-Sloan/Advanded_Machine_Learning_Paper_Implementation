@@ -1,10 +1,12 @@
 import torch
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 import numpy as np
 from transformers import DPRContextEncoder, AutoTokenizer
 import faiss
 import pickle
 import os
+import PyPDF2
+import warnings
 
 class DocumentStore:
     """Store and index documents for efficient retrieval"""
@@ -110,3 +112,62 @@ class DocumentStore:
         instance.doc_ids = metadata['doc_ids']
         
         return instance 
+    
+    def load_pdfs(self, pdf_dir: str):
+        """Load PDF documents from directory"""
+        pdf_documents = []
+        pdf_ids = []
+        
+        # Suppress specific PyPDF2 warnings
+        warnings.filterwarnings('ignore', category=UserWarning, module='PyPDF2')
+        
+        for file in os.listdir(pdf_dir):
+            if file.endswith('.pdf'):
+                file_path = os.path.join(pdf_dir, file)
+                try:
+                    with open(file_path, 'rb') as pdf_file:
+                        pdf_reader = PyPDF2.PdfReader(pdf_file)
+                        text = ""
+                        for page_num, page in enumerate(pdf_reader.pages):
+                            try:
+                                page_text = page.extract_text()
+                                if page_text:  # Only add non-empty pages
+                                    text += f"\n=== Page {page_num + 1} ===\n{page_text}\n"
+                            except Exception as e:
+                                print(f"Warning: Could not read page {page_num + 1} in {file}: {str(e)}")
+                                continue
+                            
+                        if text.strip():  # Only process non-empty documents
+                            # Split into chunks
+                            chunks = self.chunk_text(text, chunk_size=1000, overlap=200)
+                            
+                            # Add each chunk
+                            for i, chunk in enumerate(chunks):
+                                pdf_documents.append(chunk)
+                                pdf_ids.append(f"{file}#page{i}")
+                        else:
+                            print(f"Warning: No text content extracted from {file}")
+                            
+                except Exception as e:
+                    print(f"Error loading PDF {file}: {str(e)}")
+        
+        if pdf_documents:
+            # Add to existing documents
+            self.add_documents(pdf_documents, pdf_ids)
+            print(f"Successfully loaded {len(pdf_documents)} chunks from {len(set(doc_id.split('#')[0] for doc_id in pdf_ids))} PDFs")
+        else:
+            print("No PDF content was successfully loaded")
+    
+    def chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
+        """Split text into overlapping chunks"""
+        chunks = []
+        start = 0
+        text_len = len(text)
+        
+        while start < text_len:
+            end = start + chunk_size
+            chunk = text[start:end]
+            chunks.append(chunk)
+            start = end - overlap
+            
+        return chunks

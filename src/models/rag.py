@@ -52,7 +52,7 @@ class RAG(nn.Module):
     def __init__(self, 
                  question_encoder_name="facebook/dpr-question_encoder-single-nq-base",
                  context_encoder_name="facebook/dpr-ctx_encoder-single-nq-base",
-                 llama_model_name="meta-llama/Llama-3.2-3B-Instruct",
+                 llama_model_name="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                  n_docs=5,
                  max_length=512,
                  cache_dir="./cache/rag",
@@ -65,21 +65,12 @@ class RAG(nn.Module):
         self.question_encoder = DPRQuestionEncoder.from_pretrained(question_encoder_name)
         self.context_encoder = DPRContextEncoder.from_pretrained(context_encoder_name)
         
-        # Try to use 4-bit quantization if available, otherwise fall back to 16-bit
-        try:
-            print("Using 4-bit quantization with bitsandbytes")
-            self.generator = LlamaForCausalLM.from_pretrained(
-                llama_model_name,
-                torch_dtype=torch.float16,
-                device_map="auto",
-                load_in_4bit=True,
-                bnb_4bit_compute_dtype=torch.float16,
-                bnb_4bit_quant_type="nf4",
-                bnb_4bit_use_double_quant=True,
-            )
-        except ImportError:
-            print("bitsandbytes not available")
-        
+        # Initialize generator with simpler configuration
+        self.generator = LlamaForCausalLM.from_pretrained(
+            llama_model_name,
+            torch_dtype=torch.float16,
+            device_map="auto"
+        )
         self.tokenizer = LlamaTokenizer.from_pretrained(llama_model_name)
         
         # Configurations
@@ -96,6 +87,9 @@ class RAG(nn.Module):
         self.response_cache = LRUCache(max_size=self.cache_config.max_size)
         self.last_cleanup = time.time()
         self.load_cache()
+        
+        # Add to __init__ method
+        self.doc_ids = []  # Initialize doc_ids list
         
     def cleanup_cache(self):
         """Remove expired cache entries"""
@@ -194,16 +188,33 @@ class RAG(nn.Module):
                     yield cached
                     continue
             
-            # Create prompt
-            prompt = f"""[INST] You are a helpful AI assistant that answers questions about code. 
-Use the following code context to answer the question. Keep your answer focused and technical.
+            # Create a more focused prompt that emphasizes code explanation
+            prompt = f"""[INST] You are a technical assistant analyzing this project's source code and documentation. 
+Your task is to explain how the code works based ONLY on the following code sections and documentation.
 
-Context:
+Retrieved Code Sections:
 {context}
 
 Question: {question}
 
-Answer: [/INST]"""
+Instructions:
+1. Focus only on the code and documentation shown above
+2. When explaining implementation details, quote relevant code snippets using ```python blocks
+3. Reference specific files, classes, and functions
+4. If discussing a specific model implementation, explain how it's implemented in THIS codebase
+5. If you can't find relevant code in the context, say so
+6. Don't make up or assume implementation details
+
+Example format:
+"In `src/models/example.py`, the implementation uses:
+```python
+def example_function():
+    # Implementation details
+    pass
+```
+This code shows..."
+
+Provide a clear, technical explanation with code quotes: [/INST]"""
             
             # Tokenize input
             inputs = self.tokenizer(
@@ -219,43 +230,49 @@ Answer: [/INST]"""
             token_buffer = []
             
             # Generate tokens
-            for output in self.generator.generate(
-                **inputs,
-                max_new_tokens=256,
-                temperature=0.7,
-                top_p=0.9,
-                do_sample=True,
-                num_return_sequences=1,
-                pad_token_id=self.tokenizer.eos_token_id,
-                streaming=True
-            ):
-                # Decode new token
-                new_text = self.tokenizer.decode(output[-1], skip_special_tokens=True)
-                token_buffer.append(new_text)
-                streamed_output += new_text
+            with torch.no_grad():
+                outputs = self.generator.generate(
+                    **inputs,
+                    max_new_tokens=256,
+                    temperature=0.7,
+                    top_p=0.9,
+                    do_sample=True,
+                    num_return_sequences=1,
+                    pad_token_id=self.tokenizer.eos_token_id,
+                    return_dict_in_generate=True,
+                    output_scores=True
+                )
                 
-                # Yield when buffer reaches chunk size
-                if len(token_buffer) >= self.streaming_config.chunk_size:
-                    chunk_text = ''.join(token_buffer)
-                    token_buffer = []
+                # Process the entire sequence at once for proper spacing
+                full_text = self.tokenizer.decode(outputs.sequences[0], skip_special_tokens=True)
+                answer_text = full_text.split("[/INST]")[-1].strip()
+                
+                # Stream the properly spaced text
+                current_pos = 0
+                while current_pos < len(answer_text):
+                    # Get next chunk
+                    chunk_end = min(current_pos + self.streaming_config.chunk_size, len(answer_text))
+                    chunk = answer_text[current_pos:chunk_end]
                     
-                    # Calculate adaptive delay
+                    # Calculate delay
                     if self.streaming_config.adaptive_speed:
-                        delay = self.get_adaptive_delay(chunk_text)
+                        delay = self.get_adaptive_delay(chunk)
                     else:
                         delay = self.streaming_config.min_delay
-                        
+                    
                     time.sleep(delay)
                     
                     response = {
                         'question': question,
-                        'answer': streamed_output.split("[/INST]")[-1].strip(),
+                        'answer': answer_text[:chunk_end],  # Include all text up to current position
                         'cached': False,
                         'timestamp': time.time(),
-                        'complete': False,
-                        'chunk_size': len(chunk_text)
+                        'complete': chunk_end == len(answer_text),
+                        'chunk_size': len(chunk)
                     }
                     yield response
+                    
+                    current_pos = chunk_end
             
             # Final response
             final_answer = streamed_output.split("[/INST]")[-1].strip()
@@ -297,3 +314,103 @@ Answer: [/INST]"""
             'retrieved_docs': retrieved_docs,
             'retrieval_scores': retrieval_scores
         } 
+
+    def load_cache(self):
+        """Load the response cache from disk"""
+        if self.response_cache_file.exists():
+            try:
+                with open(self.response_cache_file, 'r') as f:
+                    cache_data = json.load(f)
+                    # Convert loaded data into LRUCache
+                    self.response_cache = LRUCache(max_size=self.cache_config.max_size)
+                    for key, value in cache_data.items():
+                        self.response_cache.put(key, value)
+                print(f"Loaded {len(self.response_cache)} cached responses")
+            except Exception as e:
+                print(f"Error loading cache: {str(e)}")
+                self.response_cache = LRUCache(max_size=self.cache_config.max_size)
+        else:
+            print("No cache file found, starting with empty cache")
+            self.response_cache = LRUCache(max_size=self.cache_config.max_size)
+
+    def save_cache(self):
+        """Save the response cache to disk"""
+        try:
+            with open(self.response_cache_file, 'w') as f:
+                # Convert LRUCache to dict for JSON serialization
+                cache_data = dict(self.response_cache)
+                json.dump(cache_data, f, indent=2)
+        except Exception as e:
+            print(f"Error saving cache: {str(e)}")
+
+    def get_cache_key(self, question: str, context: str) -> str:
+        """Generate a unique cache key for a question-context pair"""
+        content = f"{question}|||{context}"
+        return hashlib.md5(content.encode()).hexdigest()
+
+    def retrieve(self, questions, context_embeddings, context_texts):
+        """Retrieve relevant documents using DPR with model-specific handling"""
+        # Check if question is about a specific model
+        model_keywords = {
+            'vit': ['vit', 'vision transformer'],
+            'bert': ['bert', 'bidirectional encoder'],
+            'lora': ['lora', 'low-rank adaptation'],
+            'pix2pix': ['pix2pix', 'image-to-image'],
+            'ddpm': ['ddpm', 'diffusion'],
+            'rag': ['rag', 'retrieval augmented']
+        }
+        
+        # Get doc_ids from context_texts if they're dictionaries
+        self.doc_ids = [doc.get('file', f'doc_{i}') if isinstance(doc, dict) else f'doc_{i}'
+                        for i, doc in enumerate(context_texts)]
+        
+        # Detect if question is about specific model
+        question_lower = questions[0].lower()
+        target_model = None
+        for model, keywords in model_keywords.items():
+            if any(keyword in question_lower for keyword in keywords):
+                target_model = model
+                break
+        
+        # Encode questions
+        inputs = self.tokenizer(
+            questions,
+            max_length=512,
+            padding=True,
+            truncation=True,
+            return_tensors="pt"
+        ).to(self.generator.device)
+        
+        with torch.no_grad():
+            question_embeddings = self.question_encoder(**inputs).pooler_output
+            
+            # Calculate similarity scores
+            scores = torch.matmul(question_embeddings, context_embeddings.transpose(0, 1))
+            
+            # If specific model, boost scores for relevant files
+            if target_model:
+                for i, doc_id in enumerate(self.doc_ids):
+                    if f"models/{target_model}.py" in doc_id or f"train_{target_model}.py" in doc_id:
+                        scores[:, i] *= 1.5  # Boost score for model-specific files
+            
+            # Get top-k documents
+            k = min(self.n_docs, len(context_texts))
+            top_k_scores, top_k_indices = scores.topk(k, dim=1)
+            
+            # Format retrieved documents
+            retrieved_docs = []
+            for indices in top_k_indices:
+                valid_indices = [idx for idx in indices if idx < len(context_texts)]
+                docs = []
+                for idx in valid_indices:
+                    if isinstance(context_texts[idx], dict):
+                        # Format code with syntax highlighting
+                        docs.append(
+                            f"\n### File: {context_texts[idx]['file']} ###\n"
+                            f"```python\n{context_texts[idx]['content']}\n```\n"
+                        )
+                    else:
+                        docs.append(context_texts[idx])
+                retrieved_docs.append(docs)
+            
+            return retrieved_docs, top_k_scores

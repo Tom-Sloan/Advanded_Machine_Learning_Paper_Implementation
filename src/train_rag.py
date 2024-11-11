@@ -8,7 +8,7 @@ import inquirer
 from pathlib import Path
 import time
 
-from models.rag import RAG, CacheConfig, StreamingConfig
+from models.rag import RAG, CacheConfig, StreamingConfig, LRUCache
 from data_management.code_document_store import CodeDocumentStore
 from training.trainer import Trainer
 
@@ -43,7 +43,8 @@ class RAGTrainer(Trainer):
                 self.doc_store.index.ntotal)).to(self.device)
             
             outputs = self.model([question], context_embeddings, 
-                               [doc['content'] for doc in results])
+                               [{'file': doc['file'], 'content': doc['content']} 
+                                for doc in results])
             
             # Show answer
             print("\nGenerated Answer:")
@@ -57,14 +58,18 @@ class RAGTrainer(Trainer):
                             choices=['Good', 'Fair', 'Poor'])
             ])
             
-            # Convert feedback to loss
+            # Convert feedback to loss with requires_grad=True
             quality_scores = {'Good': 0.1, 'Fair': 0.5, 'Poor': 1.0}
             loss = torch.tensor(quality_scores[feedback['quality']], 
-                              device=self.device)
+                              device=self.device, 
+                              requires_grad=True)
+            
+            # Create a dummy backward pass
+            dummy_output = outputs['retrieval_scores'].mean() * loss
             
             # Backward pass
             self.optimizer.zero_grad()
-            loss.backward()
+            dummy_output.backward()
             
             if self.grad_clip_value is not None:
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), 
@@ -142,15 +147,26 @@ def train(args):
     doc_store = CodeDocumentStore()
     doc_store.load_codebase(args.root_dir)
     
+    # Load PDFs if specified
+    if args.pdf_dir:
+        doc_store.load_pdfs(args.pdf_dir)
+    
     # Initialize model
     model = RAG(
         cache_config=CacheConfig(),
         streaming_config=StreamingConfig()
     ).to(device)
     
+    # Clear cache if requested
+    if args.clear_cache:
+        if os.path.exists(model.response_cache_file):
+            os.remove(model.response_cache_file)
+            print("Cache cleared.")
+        model.response_cache = LRUCache(max_size=model.cache_config.max_size)
+    
     # Setup optimizer and criterion
     optimizer = optim.AdamW(model.parameters(), lr=args.learning_rate)
-    criterion = nn.MSELoss()  # Not directly used but needed for trainer interface
+    criterion = nn.MSELoss()
     
     # Create trainer
     trainer = RAGTrainer(
@@ -182,6 +198,8 @@ def main():
     parser.add_argument('--epochs', type=int, default=5)
     parser.add_argument('--learning_rate', type=float, default=1e-5)
     parser.add_argument('--save_interval', type=int, default=1)
+    parser.add_argument('--pdf_dir', type=str, help='Directory containing PDF documentation')
+    parser.add_argument('--clear_cache', action='store_true', help='Clear existing response cache')
     
     args = parser.parse_args()
     

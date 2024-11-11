@@ -1,9 +1,10 @@
 import argparse
 from data_management.code_document_store import CodeDocumentStore
-from models.rag import RAG
+from models.rag import RAG, LRUCache
 import torch
 import sys
 import time
+import os
 
 def print_stream(text: str, delay: float = 0.02):
     """Print text with a typewriter effect"""
@@ -21,6 +22,8 @@ def main():
                       help='Disable response caching')
     parser.add_argument('--no_stream', action='store_true',
                       help='Disable response streaming')
+    parser.add_argument('--clear_cache', action='store_true',
+                      help='Clear existing response cache')
     args = parser.parse_args()
     
     # Initialize document store and load codebase
@@ -32,6 +35,13 @@ def main():
     print("Loading RAG model...")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = RAG().to(device)
+    
+    # Clear cache if requested
+    if args.clear_cache:
+        if os.path.exists(model.response_cache_file):
+            os.remove(model.response_cache_file)
+            print("Cache cleared.")
+        model.response_cache = LRUCache(max_size=model.cache_config.max_size)
     
     print("\nReady for questions! (type 'exit' to quit)")
     

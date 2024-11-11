@@ -461,6 +461,26 @@ def run_rag_implementation(mode='train'):
     """Run the RAG implementation"""
     print("Running RAG implementation...")
     
+    # Ask about cache if in training mode
+    cache_args = []
+    if mode == 'train':
+        questions = [
+            inquirer.List('clear_cache',
+                         message="Would you like to clear the existing response cache?",
+                         choices=['Yes', 'No'])
+        ]
+        answers = inquirer.prompt(questions)
+        if answers['clear_cache'] == 'Yes':
+            cache_args.append('--clear_cache')
+    
+    # Ask about including PDFs
+    questions = [
+        inquirer.List('include_pdfs',
+                     message="Would you like to include PDF documentation in the knowledge base?",
+                     choices=['Yes', 'No'])
+    ]
+    pdf_answer = inquirer.prompt(questions)
+    
     # Base arguments
     args = [
         '--mode', mode,
@@ -471,8 +491,16 @@ def run_rag_implementation(mode='train'):
         '--save_interval', '1'
     ]
     
+    # Add PDF directory if requested
+    if pdf_answer['include_pdfs'] == 'Yes':
+        args.extend(['--pdf_dir', './paper_managment/PDFs'])
+    
+    # Add cache arguments
+    args.extend(cache_args)
+    
     # Run the training script
     cmd = f"python src/train_rag.py {' '.join(args)}"
+    print(f"\nExecuting: {cmd}")
     os.system(cmd)
 
 
