@@ -24,6 +24,7 @@ ENV PATH=/opt/conda/bin:$PATH
 # Create conda environment from environment.yml
 COPY environment.yml /tmp/environment.yml
 RUN conda env create -f /tmp/environment.yml \
+    && conda install -n general_purpose -c conda-forge faiss-gpu \
     && conda clean -afy
 
 # Activate conda environment by default

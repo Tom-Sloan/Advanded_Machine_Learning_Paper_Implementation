@@ -229,9 +229,17 @@
     - Maintained performance while only updating a small fraction of the model's parameters.
 
 5. Kojima, Takeshi, et al., "Large Language Models are Zero-Shot Reasoners," NeurIPS 2022.
+
     - Showed that large language models can perform reasoning tasks without task-specific training.
     - Demonstrated that appropriate prompting enables models to solve problems in a zero-shot setting.
     - Highlighted the emergent reasoning capabilities of large-scale pre-trained models.
+
+6. **Lewis, Patrick, et al., "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks," NeurIPS 2020.**
+
+    - Introduced RAG, combining retrieval and generation for knowledge-intensive tasks
+    - Used dense passage retrieval with neural generation
+    - Enabled end-to-end training of retrieval and generation components
+    - Demonstrated strong performance on question answering and fact verification
 
 ## Vision Language Models
 

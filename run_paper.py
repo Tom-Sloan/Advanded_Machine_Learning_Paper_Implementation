@@ -456,6 +456,26 @@ def run_lora_implementation(mode='train'):
     cmd = f"python src/train_lora.py {' '.join(args)}"
     os.system(cmd)
 
+
+def run_rag_implementation(mode='train'):
+    """Run the RAG implementation"""
+    print("Running RAG implementation...")
+    
+    # Base arguments
+    args = [
+        '--mode', mode,
+        '--root_dir', './src',
+        '--output_dir', './trained_models/rag',
+        '--epochs', '5',
+        '--learning_rate', '1e-5',
+        '--save_interval', '1'
+    ]
+    
+    # Run the training script
+    cmd = f"python src/train_rag.py {' '.join(args)}"
+    os.system(cmd)
+
+
 # Add this new function after the other run_* functions and before main()
 def run_all_implementations():
     """Run all paper implementations in training mode"""
@@ -491,6 +511,10 @@ def run_all_implementations():
     # LoRA
     print("\n6. Running LoRA implementation...")
     run_lora_implementation('train')
+    
+    # RAG
+    print("\n7. Running RAG implementation...")
+    run_rag_implementation('train')
     
     print("\nAll implementations have completed training!")
 
@@ -579,7 +603,7 @@ def main():
             while True:
                 # Ask what they want to do with selected paper
                 print(f"\n{selected_paper}\n")
-                action_choices = ['View Paper Information', 'Open PDF', 'Train and Evaluate', 'Evaluate', 'Back']
+                action_choices = ['View Paper Information', 'Open PDF', 'Train', 'Evaluate', 'Back']
                 action_question = [
                     inquirer.List('action',
                                  message="What would you like to do?",
@@ -601,35 +625,40 @@ def main():
                 
                 # Run appropriate implementation based on paper selection
                 if "An Image is Worth 16x16 Words" in selected_paper:
-                    if action['action'] == 'Train and Evaluate':
+                    if action['action'] == 'Train':
                         run_vit_implementation('train')
                     elif action['action'] == 'Evaluate':
                         run_vit_implementation('eval')
                 elif "Grad-CAM" in selected_paper:
-                    if action['action'] == 'Train and Evaluate':
+                    if action['action'] == 'Train':
                         run_gradcam_implementation('train')
                     elif action['action'] == 'Evaluate':
                         run_gradcam_implementation('eval')
                 elif "BERT: Pre-training of Deep Bidirectional Transformers" in selected_paper:
-                    if action['action'] == 'Train and Evaluate':
+                    if action['action'] == 'Train':
                         run_bert_implementation('train')
                     elif action['action'] == 'Evaluate':
                         run_bert_implementation('eval')
                 elif "Image-to-Image Translation with Conditional Adversarial Networks" in selected_paper:
-                    if action['action'] == 'Train and Evaluate':
+                    if action['action'] == 'Train':
                         run_pix2pix_implementation('train')
                     elif action['action'] == 'Evaluate':
                         run_pix2pix_implementation('eval')
                 elif "Denoising Diffusion Probabilistic Models" in selected_paper:
-                    if action['action'] == 'Train and Evaluate':
+                    if action['action'] == 'Train':
                         run_ddpm_implementation('train')
                     elif action['action'] == 'Evaluate':
                         run_ddpm_implementation('eval')
                 elif "LoRA: Low-Rank Adaptation of Large Language Models" in selected_paper:
-                    if action['action'] == 'Train and Evaluate':
+                    if action['action'] == 'Train':
                         run_lora_implementation('train')
                     elif action['action'] == 'Evaluate':
                         run_lora_implementation('eval')
+                elif "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks" in selected_paper:
+                    if action['action'] == 'Train':
+                        run_rag_implementation('train')
+                    elif action['action'] == 'Evaluate':
+                        run_rag_implementation('eval')
                 else:
                     print(f"Demo for paper '{selected_paper}' is not yet available.")
 

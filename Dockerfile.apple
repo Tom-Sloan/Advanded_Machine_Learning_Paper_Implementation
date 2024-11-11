@@ -29,6 +29,7 @@ RUN sed -i 's/pytorch=2.5.1/pytorch::pytorch=2.5.1/' /tmp/environment.yml \
 
 # Create conda environment
 RUN conda env create -f /tmp/environment.yml \
+    && conda install -n general_purpose -c conda-forge faiss-cpu \
     && conda clean -afy
 
 # Activate conda environment by default

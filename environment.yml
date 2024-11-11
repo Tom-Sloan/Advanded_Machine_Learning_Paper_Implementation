@@ -35,6 +35,11 @@ dependencies:
     # Deep Learning Extras
     - einops
     - tiktoken
+    - accelerate
+
+    # Image Processing
+    - jpeg
+    - libpng
 
     - pip:
           # Additional packages not available in conda
@@ -45,5 +50,9 @@ dependencies:
           - propcache
           - opencv-python
           - inquirer
+          - bitsandbytes
+          - sentencepiece
+          - protobuf
+          - transformers
 
 prefix: /opt/anaconda3/envs/general_purpose
